@@ -1,0 +1,12 @@
+const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/apiError');
+const { getMany, getById, insert, updateById } = require('../services/dataService');
+const { ROBOT_STATUSES, requireFields, validateUuid, validateEnum, validateCoordinates } = require('../utils/validation');
+const { pick } = require('../utils/object');
+const validateRobot = (body, required) => { if (required) requireFields(body, ['name', 'status']); validateEnum(body.status, ROBOT_STATUSES, 'status'); validateCoordinates(body); };
+const listRobots = asyncHandler(async (req, res) => { res.json({ success: true, data: await getMany('robots') }); });
+const getRobot = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'robot id'); res.json({ success: true, data: await getById('robots', 'robot_id', req.params.id, 'ROBOT_NOT_FOUND') }); });
+const createRobot = asyncHandler(async (req, res) => { validateRobot(req.body, true); res.status(201).json({ success: true, data: await insert('robots', pick(req.body, ['name', 'status', 'latitude', 'longitude'])) }); });
+const updateRobot = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'robot id'); validateRobot(req.body, false); const updates = pick(req.body, ['name', 'status', 'latitude', 'longitude']); if (!Object.keys(updates).length) throw new ApiError(400, 'VALIDATION_ERROR', 'No allowed robot fields were supplied'); res.json({ success: true, data: await updateById('robots', 'robot_id', req.params.id, updates, 'ROBOT_NOT_FOUND') }); });
+const setRobotStatus = (status) => asyncHandler(async (req, res) => { validateUuid(req.params.id, 'robot id'); const robot = await updateById('robots', 'robot_id', req.params.id, { status }, 'ROBOT_NOT_FOUND'); res.json({ success: true, data: robot }); });
+module.exports = { listRobots, getRobot, createRobot, updateRobot, deployRobot: setRobotStatus('MISSION'), stopRobot: setRobotStatus('OFFLINE'), returnRobot: setRobotStatus('ONLINE') };

@@ -1,0 +1,2 @@
+const router = require('express').Router(); const c = require('../controllers/alertController'); const { authenticate, authorize } = require('../middleware/auth');
+router.use(authenticate); router.get('/', c.listAlerts); router.get('/:id', c.getAlert); router.post('/', authorize('AUTHORITY', 'ADMIN'), c.createAlert); router.patch('/:id', authorize('AUTHORITY', 'ADMIN'), c.updateAlert); module.exports = router;

@@ -1,0 +1,10 @@
+const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/apiError');
+const { getMany, getById, insert, updateById } = require('../services/dataService');
+const { requireFields, validateUuid } = require('../utils/validation');
+const { pick } = require('../utils/object');
+const createAction = asyncHandler(async (req, res) => { requireFields(req.body, ['action_type', 'description', 'status']); if (req.body.report_id !== undefined) validateUuid(req.body.report_id, 'report_id'); res.status(201).json({ success: true, data: await insert('government_actions', { ...pick(req.body, ['report_id', 'action_type', 'description', 'status', 'assigned_resource']), authority_id: req.user.id }) }); });
+const listActions = asyncHandler(async (req, res) => { res.json({ success: true, data: await getMany('government_actions') }); });
+const getAction = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'action id'); res.json({ success: true, data: await getById('government_actions', 'action_id', req.params.id, 'ACTION_NOT_FOUND') }); });
+const updateAction = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'action id'); const updates = pick(req.body, ['report_id', 'action_type', 'description', 'status', 'assigned_resource']); if (updates.report_id !== undefined) validateUuid(updates.report_id, 'report_id'); if (!Object.keys(updates).length) throw new ApiError(400, 'VALIDATION_ERROR', 'No allowed action fields were supplied'); res.json({ success: true, data: await updateById('government_actions', 'action_id', req.params.id, updates, 'ACTION_NOT_FOUND') }); });
+module.exports = { createAction, listActions, getAction, updateAction };
