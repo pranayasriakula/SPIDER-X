@@ -4,8 +4,7 @@ export function FormNotice({ result }) {
   return (
     <div className="form-notice" role="status">
       <strong>{result.message}</strong>
-      <span>Reference: {result.reference}. This is a mock submission stored only in your browser session.</span>
+      <span>{result.source === 'mock' ? 'This request is stored only in the local mock workflow.' : `Reference: ${result.reference}.`}</span>
     </div>
   );
 }
-

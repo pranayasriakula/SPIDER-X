@@ -1,28 +1,8 @@
-import { useEffect, useState } from 'react';
-import { getPublicProfile, savePublicProfile } from '../../services/publicService';
+export function PublicProfile({ auth, onOpenAccount }) {
+  if (auth.loading) return <p className="loading-message">Loading your profile…</p>;
+  if (!auth.profile) return <section className="form-page"><p className="eyebrow">Public profile</p><h1>Your public profile</h1><div className="api-state"><strong>Sign in to view your profile.</strong><button className="text-button" onClick={onOpenAccount} type="button">Sign in or register</button></div></section>;
 
-export function PublicProfile() {
-  const [profile, setProfile] = useState(null);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => { getPublicProfile().then(({ profile: result }) => setProfile(result)); }, []);
-  if (!profile) return <p className="loading-message">Loading sample profile…</p>;
-
-  function updateField(event) { setProfile((current) => ({ ...current, [event.target.name]: event.target.value })); setSaved(false); }
-  async function handleSubmit(event) { event.preventDefault(); await savePublicProfile(profile); setSaved(true); }
-
-  return (
-    <section className="form-page" aria-labelledby="profile-title">
-      <p className="eyebrow">Public profile · Local mock data</p><h1 id="profile-title">Your public profile</h1>
-      <p className="lead">Keep basic contact and location details ready for future reports. Changes below are not sent to or stored by a government system.</p>
-      <form className="public-form" onSubmit={handleSubmit}>
-        <label>Display name<input name="name" value={profile.name} onChange={updateField} required /></label>
-        <label>Phone number<input name="phone" value={profile.phone} onChange={updateField} inputMode="tel" required /></label>
-        <label>Usual area or ward<input name="area" value={profile.area} onChange={updateField} required /></label>
-        <label>Emergency contact (optional)<input name="emergencyContact" value={profile.emergencyContact} onChange={updateField} /></label>
-        <button className="button primary" type="submit">Save profile locally</button>
-      </form>
-      {saved && <div className="form-notice" role="status"><strong>Sample profile updated.</strong><span>The change exists only in this running browser session.</span></div>}
-    </section>
-  );
+  const { profile } = auth;
+  return <section className="form-page" aria-labelledby="profile-title"><p className="eyebrow">Public profile</p><h1 id="profile-title">Your public profile</h1><p className="lead">Profile information is provided by your authenticated Spider-X account.</p><dl className="profile-details"><div><dt>Name</dt><dd>{profile.name || 'Not provided'}</dd></div><div><dt>Email</dt><dd>{auth.user?.email || 'Not provided'}</dd></div><div><dt>Phone</dt><dd>{profile.phone || 'Not provided'}</dd></div><div><dt>Location</dt><dd>{profile.location || 'Not provided'}</dd></div><div><dt>Role</dt><dd>{profile.role}</dd></div></dl></section>;
 }
+
