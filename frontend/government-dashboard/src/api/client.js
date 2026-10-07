@@ -123,6 +123,8 @@ export const getLatestObservations = () => request('GET', '/observations/latest'
 
 // Alerts
 export const getAlerts = () => request('GET', '/alerts');
+export const createAlert = (alert) => request('POST', '/alerts', alert);
+export const updateAlert = (alertId, updates) => request('PATCH', `/alerts/${alertId}`, updates);
 
 // Notifications
 export const getNotifications = () => request('GET', '/notifications');
