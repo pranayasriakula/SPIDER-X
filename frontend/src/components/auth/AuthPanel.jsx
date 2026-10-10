@@ -9,6 +9,7 @@ function errorDetails(error) {
 
 export function AuthPanel({ onAuthenticated }) {
   const [mode, setMode] = useState('login');
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', name: '', phone: '', location: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -56,12 +57,16 @@ export function AuthPanel({ onAuthenticated }) {
       <form className="public-form" onSubmit={handleSubmit}>
         {mode === 'register' && <><label>Name (optional)<input name="name" value={form.name} onChange={updateField} autoComplete="name" /></label><label>Phone (optional)<input name="phone" value={form.phone} onChange={updateField} autoComplete="tel" /></label><label>Location (optional)<input name="location" value={form.location} onChange={updateField} /></label></>}
         <label>Email<input name="email" value={form.email} onChange={updateField} autoComplete="email" type="email" required /></label>
-        <label>Password<input name="password" value={form.password} onChange={updateField} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type="password" required /></label>
-        <button className="button primary" disabled={loading} type="submit">{loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Register'}</button>
+        <label>Password
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input style={{ flex: 1, minWidth: 0 }} name="password" value={form.password} onChange={updateField} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} required />
+            <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} style={{ cursor: 'pointer', padding: '8px', border: 'none', background: 'transparent' }}>{showPassword ? '🙈' : '👁️'}</button>
+          </span>
+        </label>
+        <button className="button primary" disabled={loading} type="submit">{loading ? 'Please waitâ€¦' : mode === 'login' ? 'Sign in' : 'Register'}</button>
       </form>
       {message && <div className="form-notice" role="status"><strong>{message}</strong></div>}
       {error && <div className="api-state error" role="alert"><strong>Authentication failed.</strong><span>{errorDetails(error)}</span><span>{error.message}</span></div>}
     </section>
   );
 }
-
