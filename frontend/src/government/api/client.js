@@ -1,6 +1,5 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:5000/api';
 
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+const configuredBaseUrl = `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '')}/api`;
 export const API_BASE_URL = configuredBaseUrl.replace(/\/$/, '');
 
 let accessToken = null;
