@@ -29,6 +29,8 @@ app.use(express.json());
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/government', require('./src/routes/governmentRoutes'));
+app.use('/api/admin/government-applications', require('./src/routes/governmentAdminRoutes'));
 app.use('/api/reports', reportRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/actions', actionRoutes);
