@@ -1,0 +1,11 @@
+const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/apiError');
+const { getMany, getById, insert, updateById } = require('../services/dataService');
+const { requireFields, validateUuid, validateCoordinates } = require('../utils/validation');
+const { pick } = require('../utils/object');
+const validateCenter = (body, required) => { if (required) requireFields(body, ['name', 'address', 'latitude', 'longitude', 'capacity', 'available_capacity', 'status']); validateCoordinates(body); ['capacity', 'available_capacity'].forEach((field) => { if (body[field] !== undefined && (!Number.isInteger(body[field]) || body[field] < 0)) throw new ApiError(400, 'VALIDATION_ERROR', `${field} must be a non-negative integer`); }); };
+const listCenters = asyncHandler(async (req, res) => { res.json({ success: true, data: await getMany('rescue_centers') }); });
+const getCenter = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'center id'); res.json({ success: true, data: await getById('rescue_centers', 'center_id', req.params.id, 'RESCUE_CENTER_NOT_FOUND') }); });
+const createCenter = asyncHandler(async (req, res) => { validateCenter(req.body, true); res.status(201).json({ success: true, data: await insert('rescue_centers', pick(req.body, ['name', 'address', 'latitude', 'longitude', 'capacity', 'available_capacity', 'contact', 'status'])) }); });
+const updateCenter = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'center id'); validateCenter(req.body, false); const updates = pick(req.body, ['name', 'address', 'latitude', 'longitude', 'capacity', 'available_capacity', 'contact', 'status']); if (!Object.keys(updates).length) throw new ApiError(400, 'VALIDATION_ERROR', 'No allowed rescue centre fields were supplied'); res.json({ success: true, data: await updateById('rescue_centers', 'center_id', req.params.id, updates, 'RESCUE_CENTER_NOT_FOUND') }); });
+module.exports = { listCenters, getCenter, createCenter, updateCenter };

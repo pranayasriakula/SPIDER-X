@@ -1,0 +1,2 @@
+const router = require('express').Router(); const c = require('../controllers/reportController'); const { authenticate, authorize } = require('../middleware/auth');
+router.use(authenticate); router.post('/', c.createReport); router.get('/', authorize('AUTHORITY', 'ADMIN'), c.listReports); router.get('/my', c.myReports); router.get('/:id', c.getReport); router.patch('/:id', c.updateReport); module.exports = router;

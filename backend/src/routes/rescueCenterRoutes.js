@@ -1,0 +1,2 @@
+const router = require('express').Router(); const c = require('../controllers/rescueCenterController'); const { authenticate, authorize } = require('../middleware/auth');
+router.use(authenticate); router.get('/', c.listCenters); router.get('/:id', c.getCenter); router.post('/', authorize('AUTHORITY', 'ADMIN'), c.createCenter); router.patch('/:id', authorize('AUTHORITY', 'ADMIN'), c.updateCenter); module.exports = router;

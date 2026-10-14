@@ -1,0 +1,8 @@
+const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/apiError');
+const { getMany, getById, insert, database } = require('../services/dataService');
+const { requireFields, validateUuid, validateCoordinates, validateTimestamp, validateSensorStatuses } = require('../utils/validation');
+const createObservation = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'robot id'); requireFields(req.body, ['timestamp', 'latitude', 'longitude', 'sensors']); validateTimestamp(req.body.timestamp); validateCoordinates(req.body); validateSensorStatuses(req.body.sensors); await getById('robots', 'robot_id', req.params.id, 'ROBOT_NOT_FOUND'); const observation = await insert('sensor_observations', { robot_id: req.params.id, timestamp: new Date(req.body.timestamp).toISOString(), latitude: req.body.latitude, longitude: req.body.longitude, sensors: req.body.sensors }); res.status(201).json({ success: true, data: observation }); });
+const listObservations = asyncHandler(async (req, res) => { validateUuid(req.params.id, 'robot id'); await getById('robots', 'robot_id', req.params.id, 'ROBOT_NOT_FOUND'); res.json({ success: true, data: await getMany('sensor_observations', { robot_id: req.params.id }, 'timestamp') }); });
+const latestObservations = asyncHandler(async (req, res) => { const { data, error } = await database().from('sensor_observations').select('*').order('timestamp', { ascending: false }).limit(100); if (error) throw new ApiError(500, 'DATABASE_ERROR', error.message); res.json({ success: true, data }); });
+module.exports = { createObservation, listObservations, latestObservations };
