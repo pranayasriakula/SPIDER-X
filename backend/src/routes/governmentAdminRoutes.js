@@ -4,6 +4,7 @@ const controller = require('../controllers/governmentController');
 
 router.use(authenticate, authorize('ADMIN'));
 router.get('/', controller.list);
+router.get('/:id', controller.getById);
 router.post('/:id/approve', controller.approve);
 router.post('/:id/reject', controller.reject);
 router.post('/:id/revoke', controller.revoke);

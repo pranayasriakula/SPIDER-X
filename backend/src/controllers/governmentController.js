@@ -135,6 +135,27 @@ const list = asyncHandler(async (req, res) => {
 	check(error);
 	res.json({ success: true, data });
 });
+const getById = asyncHandler(async (req, res) => {
+    validateUuid(req.params.id, 'application id');
+
+    const { data, error } = await database()
+        .from('government_applications')
+        .select('*')
+        .eq('application_id', req.params.id)
+        .maybeSingle();
+
+    check(error);
+
+    if (!data) {
+        throw new ApiError(
+            404,
+            'APPLICATION_NOT_FOUND',
+            'Application not found'
+        );
+    }
+
+    res.json({ success: true, data });
+});
 
 const decide = (action) => asyncHandler(async (req, res) => {
 	validateUuid(req.params.id, 'application id');
@@ -198,6 +219,7 @@ module.exports = {
 	ownHistory,
 	ownStatus,
 	list,
+	getById,
 	approve: decide('approve'),
 	reject: decide('reject'),
 	revoke: decide('revoke'),
