@@ -31,9 +31,34 @@ function App() {
   useEffect(() => {
     const accessToken = getAccessToken();
     if (!accessToken) { setAuth({ loading: false, user: null, profile: null, error: null }); return; }
-    getCurrentUser(accessToken)
-      .then(({ user, profile }) => setAuth({ loading: false, user, profile, error: null }))
-      .catch((error) => { clearAccessToken(); setAuth({ loading: false, user: null, profile: null, error }); });
+  getCurrentUser(accessToken)
+  .then(({ user, profile }) => {
+    const allowedRoles = ['PUBLIC', 'AUTHORITY', 'ADMIN'];
+
+    if (!allowedRoles.includes(profile?.role)) {
+      throw new Error('Your account does not have access to this portal.');
+    }
+
+    setSelectedPortal(
+      profile.role === 'PUBLIC' ? 'public' : 'government'
+    );
+
+    setAuth({
+      loading: false,
+      user,
+      profile,
+      error: null,
+    });
+  })
+  .catch((error) => {
+    clearAccessToken();
+    setAuth({
+      loading: false,
+      user: null,
+      profile: null,
+      error,
+    });
+  });
   }, []);
 
   
