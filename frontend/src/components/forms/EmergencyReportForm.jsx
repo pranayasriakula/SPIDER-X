@@ -3,7 +3,7 @@ import { ApiRequestError } from '../../services/apiClient';
 import { submitEmergencyReport } from '../../services/reportService';
 import { FormNotice } from './FormNotice';
 
-const initialForm = { latitude: '', longitude: '', disasterType: '', description: '', severity: '' };
+const initialForm = { latitude: '', longitude: '', area: '', city: '', district: '', state: '', landmark: '', disasterType: '', description: '', severity: '' };
 
 export function EmergencyReportForm({ isAuthenticated, onOpenAccount }) {
   const [form, setForm] = useState(initialForm);
@@ -24,6 +24,32 @@ export function EmergencyReportForm({ isAuthenticated, onOpenAccount }) {
     event.preventDefault();
     setError(null);
     setResult(null);
+
+
+
+    const latitude = Number(form.latitude);
+    const longitude = Number(form.longitude);
+
+    if (
+      form.latitude.trim() === '' ||
+      form.longitude.trim() === '' ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      setError(new ApiRequestError({
+        method: 'POST',
+        endpoint: '/api/reports',
+        status: null,
+        code: 'INVALID_COORDINATES',
+        message: 'Enter a valid latitude from -90 to 90 and longitude from -180 to 180.'
+      }));
+      return;
+    }
+
     setLoading(true);
     try {
       const report = await submitEmergencyReport(form);
@@ -40,15 +66,47 @@ export function EmergencyReportForm({ isAuthenticated, onOpenAccount }) {
       <p className="lead">Use this form to share non-immediate emergency information. For immediate danger, contact local emergency services first.</p>
       {!isAuthenticated && <div className="api-state"><strong>Sign in is required before submitting a report.</strong><button className="text-button" onClick={onOpenAccount} type="button">Sign in or register</button></div>}
       <form className="public-form" onSubmit={handleSubmit}>
-        <fieldset><legend>Incident coordinates</legend><p className="field-help">Enter numeric coordinates, or allow your browser to fill them from your current location. Coordinates are sent to the report API.</p><div className="two-column-fields"><label>Latitude<input name="latitude" value={form.latitude} onChange={updateField} type="number" step="any" min="-90" max="90" required /></label><label>Longitude<input name="longitude" value={form.longitude} onChange={updateField} type="number" step="any" min="-180" max="180" required /></label></div>{'geolocation' in navigator && <button className="text-button" onClick={useCurrentLocation} type="button">Use my current location</button>}{locationError && <span className="field-error" role="alert">{locationError}</span>}</fieldset>
+        <fieldset><legend>Incident coordinates</legend><p className="field-help">Enter numeric coordinates, or allow your browser to fill them from your current location. Coordinates are sent to the report API.</p><div className="two-column-fields"><label>Latitude<input name="latitude" value={form.latitude} onChange={updateField} type="number" step="any" min="-90" max="90" required /></label><label>Longitude<input name="longitude" value={form.longitude} onChange={updateField} type="number" step="any" min="-180" max="180" required /></label></div>
+        <div className="two-column-fields">
+          <label>Area / locality<input name="area" value={form.area} onChange={updateField} placeholder="Area or neighbourhood" /></label>
+          <label>City / town<input name="city" value={form.city} onChange={updateField} placeholder="City or town" /></label>
+          <label>District<input name="district" value={form.district} onChange={updateField} placeholder="District" /></label>
+          <label>State<input name="state" value={form.state} onChange={updateField} placeholder="State" /></label>
+        </div>
+        <label>Nearby landmark<input name="landmark" value={form.landmark} onChange={updateField} placeholder="Nearby school, hospital, road, or landmark" /></label>
+        <div className="api-state" aria-live="polite">
+          <strong>Location preview</strong>
+          <p>{[form.area, form.city, form.district, form.state].filter(Boolean).join(", ") || "Add area, city, district, or state"}</p>
+          {form.landmark && <p>Landmark: {form.landmark}</p>}
+          <p>Coordinates: {form.latitude || "—"}, {form.longitude || "—"}</p>
+        </div>
+        <button
+          className="text-button"
+          type="button"
+          onClick={() => {
+            setForm((current) => ({
+              ...current,
+              latitude: '',
+              longitude: '',
+              area: '',
+              city: '',
+              district: '',
+              state: '',
+              landmark: '',
+            }));
+            setLocationError('');
+          }}
+        >
+          Clear location
+        </button>
+        {'geolocation' in navigator && <button className="text-button" onClick={useCurrentLocation} type="button">Use my current location</button>}{locationError && <span className="field-error" role="alert">{locationError}</span>}</fieldset>
         <label>Disaster type<select name="disasterType" value={form.disasterType} onChange={updateField} required><option value="">Choose a type</option><option value="FLOOD">Flood</option><option value="EARTHQUAKE">Earthquake</option><option value="FIRE">Fire</option><option value="LANDSLIDE">Landslide</option><option value="CYCLONE">Cyclone</option><option value="TSUNAMI">Tsunami</option><option value="DROUGHT">Drought</option><option value="INDUSTRIAL">Industrial</option><option value="OTHER">Other</option></select></label>
         <fieldset><legend>Severity</legend><div className="choice-row">{['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((severity) => <label className="choice" key={severity}><input type="radio" name="severity" value={severity} checked={form.severity === severity} onChange={updateField} required /> {severity}</label>)}</div></fieldset>
         <label>What is happening?<textarea name="description" value={form.description} onChange={updateField} placeholder="Describe the situation, risks, and people affected." rows="5" required /></label>
-        <button className="button primary" disabled={!isAuthenticated || loading} type="submit">{loading ? 'Submitting…' : 'Submit emergency report'}</button>
+        <button className="button primary" disabled={!isAuthenticated || loading} type="submit">{loading ? 'Submitting...' : 'Submit emergency report'}</button>
       </form>
       <FormNotice result={result} />
-      {error && <div className="api-state error" role="alert"><strong>Unable to submit report.</strong><span>{error.method} {error.endpoint} · {error.status ? `HTTP ${error.status}` : 'No HTTP response'} · {error.code}</span><span>{error.message}</span></div>}
+      {error && <div className="api-state error" role="alert"><strong>Unable to submit report.</strong><span>{error.method} {error.endpoint} | {error.status ? `HTTP ${error.status}` : 'No HTTP response'} | {error.code}</span><span>{error.message}</span></div>}
     </section>
   );
 }
-

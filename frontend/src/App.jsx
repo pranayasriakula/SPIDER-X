@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DashboardOverview } from './components/dashboard/DashboardOverview';
+import { SafetyPrecautions } from './components/dashboard/SafetyPrecautions';
 import { AssistanceRequestForm } from './components/forms/AssistanceRequestForm';
 import { EmergencyReportForm } from './components/forms/EmergencyReportForm';
 import { AlertsSection } from './components/alerts/AlertsSection';
@@ -17,6 +18,7 @@ const navigationItems = [
   { id: 'assistance', label: 'Request assistance' },
   { id: 'tracking', label: 'My requests' },
   { id: 'alerts', label: 'Alerts' },
+  { id: 'safety', label: 'Safety & Precautions' },
   { id: 'profile', label: 'Profile' },
   { id: 'account', label: 'Account' },
 ];
@@ -77,6 +79,7 @@ function App() {
         {activeSection === 'assistance' && <AssistanceRequestForm />}
         {activeSection === 'tracking' && <RequestTracker isAuthenticated={Boolean(auth.profile)} onOpenAccount={() => setActiveSection('account')} />}
         {activeSection === 'alerts' && <AlertsSection />}
+        {activeSection === 'safety' && <SafetyPrecautions />}
         {activeSection === 'profile' && <PublicProfile auth={auth} onOpenAccount={() => setActiveSection('account')} />}
         {activeSection === 'account' && <AuthPanel onAuthenticated={handleAuthenticated} />}
       </main>
