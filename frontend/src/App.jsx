@@ -1,156 +1,286 @@
-import { useEffect, useState } from 'react';
+
+import { useCallback, useEffect, useState } from 'react';
+
 import { DashboardOverview } from './components/dashboard/DashboardOverview';
+
+import { SafetyPrecautions } from './components/dashboard/SafetyPrecautions';
 import { AssistanceRequestForm } from './components/forms/AssistanceRequestForm';
 import { EmergencyReportForm } from './components/forms/EmergencyReportForm';
 import { AlertsSection } from './components/alerts/AlertsSection';
 import { RequestTracker } from './components/tracking/RequestTracker';
 import { PublicProfile } from './components/profile/PublicProfile';
-import { SectionPlaceholder } from './components/layout/SectionPlaceholder';
+import { GovernmentAccess } from './components/government/GovernmentAccess';
 import { AppHeader } from './components/layout/AppHeader';
 import { AuthPanel } from './components/auth/AuthPanel';
 import { WelcomePage } from './components/welcome/WelcomePage';
+
 import GovernmentDashboard from './government/GovernmentDashboard';
-import { getCurrentUser, logoutAccount } from './services/authService';
-import { clearAccessToken, getAccessToken, storeAccessToken } from './services/authSession';
+
+import {
+  getCurrentUser,
+  logoutAccount,
+} from './services/authService';
+
+import {
+  clearAccessToken,
+  getAccessToken,
+  storeAccessToken,
+} from './services/authSession';
 
 const navigationItems = [
   { id: 'overview', label: 'Overview' },
+ 
   { id: 'report', label: 'Report emergency' },
   { id: 'assistance', label: 'Request assistance' },
   { id: 'tracking', label: 'My requests' },
   { id: 'alerts', label: 'Alerts' },
+  { id: 'safety', label: 'Safety & Precautions' },
   { id: 'profile', label: 'Profile' },
+  { id: 'government-access', label: 'Government Access' },
   { id: 'account', label: 'Account' },
 ];
 
+const allowedRoles = ['PUBLIC', 'AUTHORITY', 'ADMIN'];
+
+function getPortalForRole(role) {
+  if (role === 'PUBLIC') return 'public';
+
+  if (role === 'AUTHORITY' || role === 'ADMIN') {
+    return 'government';
+  }
+
+  return null;
+}
+
 function App() {
   const [activeSection, setActiveSection] = useState('overview');
+
   const [selectedPortal, setSelectedPortal] = useState(null);
-  const [auth, setAuth] = useState({ loading: true, user: null, profile: null, error: null });
 
+  const [auth, setAuth] = useState({
+    loading: true,
+    user: null,
+    profile: null,
+    error: null,
+  });
+
+  // Restore an existing session when the application opens.
   useEffect(() => {
+    let cancelled = false;
     const accessToken = getAccessToken();
-    if (!accessToken) { setAuth({ loading: false, user: null, profile: null, error: null }); return; }
-  getCurrentUser(accessToken)
-  .then(({ user, profile }) => {
-    const allowedRoles = ['PUBLIC', 'AUTHORITY', 'ADMIN'];
 
-    if (!allowedRoles.includes(profile?.role)) {
-      throw new Error('Your account does not have access to this portal.');
+    if (!accessToken) {
+      setAuth({
+        loading: false,
+        user: null,
+        profile: null,
+        error: null,
+      });
+
+      return () => {
+        cancelled = true;
+      };
     }
 
-    setSelectedPortal(
-      profile.role === 'PUBLIC' ? 'public' : 'government'
-    );
+    getCurrentUser(accessToken)
+      .then(({ user, profile }) => {
+        if (cancelled) return;
 
-    setAuth({
-      loading: false,
-      user,
-      profile,
-      error: null,
-    });
-  })
-  .catch((error) => {
-    clearAccessToken();
-    setAuth({
-      loading: false,
-      user: null,
-      profile: null,
-      error,
-    });
-  });
+        if (!allowedRoles.includes(profile?.role)) {
+          throw new Error(
+            'Your account does not have access to this portal.'
+          );
+        }
+
+        setSelectedPortal(getPortalForRole(profile.role));
+
+        setAuth({
+          loading: false,
+          user,
+          profile,
+          error: null,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        clearAccessToken();
+
+        setSelectedPortal(null);
+
+        setAuth({
+          loading: false,
+          user: null,
+          profile: null,
+          error,
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  
-async function handleAuthenticated(accessToken) {
-  try {
-    // Verify the account with the backend before storing the token.
-    const { user, profile } = await getCurrentUser(accessToken);
+  // Refresh the role when an application is approved or revoked.
+  const refreshAuthenticatedUser = useCallback(async () => {
+    const accessToken = getAccessToken();
 
-    const isGovernmentRole =
-      profile.role === 'AUTHORITY' || profile.role === 'ADMIN';
-
-    if (selectedPortal === 'government' && !isGovernmentRole) {
-      throw new Error(
-        'This account does not have Government Portal access.'
-      );
+    if (!accessToken) {
+      return null;
     }
 
-    if (selectedPortal === 'public' && profile.role !== 'PUBLIC') {
-      throw new Error(
-        'Please use the Government Portal for this account.'
-      );
-    }
+    try {
+      const { user, profile } = await getCurrentUser(accessToken);
 
-    // Save the session only after successful role verification.
-    storeAccessToken(accessToken);
-    setAuth({ loading: false, user, profile, error: null });
-    setActiveSection('overview');
-  } catch (error) {
-    clearAccessToken();
-    throw error;
+      if (!allowedRoles.includes(profile?.role)) {
+        throw new Error(
+          'Your account does not have access to this portal.'
+        );
+      }
+
+      setSelectedPortal(getPortalForRole(profile.role));
+
+      setAuth({
+        loading: false,
+        user,
+        profile,
+        error: null,
+      });
+
+      return { user, profile };
+    } catch (error) {
+      setAuth((current) => ({
+        ...current,
+        loading: false,
+        error,
+      }));
+
+      throw error;
+    }
+  }, []);
+
+  // Verify login and ensure the account belongs to the selected portal.
+  async function handleAuthenticated(accessToken) {
+    try {
+      const { user, profile } = await getCurrentUser(accessToken);
+
+      if (!allowedRoles.includes(profile?.role)) {
+        throw new Error(
+          'Your account does not have access to this portal.'
+        );
+      }
+
+      const accountPortal = getPortalForRole(profile.role);
+
+      if (
+        selectedPortal === 'government' &&
+        accountPortal !== 'government'
+      ) {
+        throw new Error(
+          'This account does not have Government Portal access.'
+        );
+      }
+
+      if (
+        selectedPortal === 'public' &&
+        accountPortal !== 'public'
+      ) {
+        throw new Error(
+          'Please use the Government Portal for this account.'
+        );
+      }
+
+      // Store the session only after verifying the role.
+      storeAccessToken(accessToken);
+
+      setSelectedPortal(accountPortal);
+
+      setAuth({
+        loading: false,
+        user,
+        profile,
+        error: null,
+      });
+
+      setActiveSection('overview');
+    } catch (error) {
+      clearAccessToken();
+      throw error;
+    }
   }
-}
 
+  // Log out and return to the Welcome Page.
+  async function handleLogout() {
+    const accessToken = getAccessToken();
 
-async function handleLogout() {
-  const accessToken = getAccessToken();
+    try {
+      if (accessToken) {
+        await logoutAccount(accessToken);
+      }
+    } catch (error) {
+      console.error('Server logout failed:', error);
+    } finally {
+      clearAccessToken();
 
-  try {
-    if (accessToken) {
-      await logoutAccount(accessToken);
+      setAuth({
+        loading: false,
+        user: null,
+        profile: null,
+        error: null,
+      });
+
+      setActiveSection('overview');
+      setSelectedPortal(null);
     }
-  } catch (error) {
-    console.error('Server logout failed:', error);
-  } finally {
-    // Always clear the local session.
-    clearAccessToken();
-
-    setAuth({
-      loading: false,
-      user: null,
-      profile: null,
-      error: null,
-    });
-
-    setActiveSection('overview');
-
-    // Return to the Welcome Page.
-    setSelectedPortal(null);
   }
-}
 
   const userRole = auth.profile?.role;
+
+  // Wait while checking the saved session.
   if (auth.loading) {
-  return <div className="page-container">Checking your session...</div>;
-}
+    return (
+      <div className="page-container">
+        Checking your session...
+      </div>
+    );
+  }
 
-if (!auth.user && !selectedPortal) {
-  return <WelcomePage onSelectPortal={setSelectedPortal} />;
-}
-if (!auth.user && selectedPortal) {
-  return (
-    <main
-      className="page-container"
-      style={{ minHeight: '100vh', paddingTop: '48px' }}
-    >
-      <button
-        type="button"
-        className="nav-link"
-        onClick={() => setSelectedPortal(null)}
-        style={{ marginBottom: '24px' }}
+  // Show Welcome Page before selecting a portal.
+  if (!auth.user && !selectedPortal) {
+    return (
+      <WelcomePage onSelectPortal={setSelectedPortal} />
+    );
+  }
+
+  // Show login/register for the selected portal.
+  if (!auth.user && selectedPortal) {
+    return (
+      <main
+        className="page-container"
+        style={{
+          minHeight: '100vh',
+          paddingTop: '48px',
+        }}
       >
-        ← Back to Portal Selection
-      </button>
+        <button
+          type="button"
+          className="nav-link"
+          onClick={() => setSelectedPortal(null)}
+          style={{ marginBottom: '24px' }}
+        >
+          ← Back to Portal Selection
+        </button>
 
-      <AuthPanel
-        key={selectedPortal}
-        portal={selectedPortal}
-        onAuthenticated={handleAuthenticated}
-      />
-    </main>
-  );
-}
+        <AuthPanel
+          key={selectedPortal}
+          portal={selectedPortal}
+          onAuthenticated={handleAuthenticated}
+        />
+      </main>
+    );
+  }
+
+  // AUTHORITY and ADMIN accounts use the Government Dashboard.
   if (userRole === 'AUTHORITY' || userRole === 'ADMIN') {
     return (
       <GovernmentDashboard
@@ -163,32 +293,90 @@ if (!auth.user && selectedPortal) {
     );
   }
 
-
+  // PUBLIC accounts use the Public Dashboard.
   return (
     <div className="app-shell">
-      <AppHeader profile={auth.profile} onLogout={handleLogout} onOpenAccount={() => setActiveSection('account')} />
+      <AppHeader
+        profile={auth.profile}
+        onLogout={handleLogout}
+        onOpenAccount={() => setActiveSection('account')}
+      />
+
       <main className="page-container">
-        <nav className="section-nav" aria-label="Public dashboard sections">
+        <nav
+          className="section-nav"
+          aria-label="Public dashboard sections"
+        >
           {navigationItems.map((item) => (
             <button
-              aria-current={activeSection === item.id ? 'page' : undefined}
-              className={activeSection === item.id ? 'nav-link active' : 'nav-link'}
               key={item.id}
-              onClick={() => setActiveSection(item.id)}
               type="button"
+              aria-current={
+                activeSection === item.id ? 'page' : undefined
+              }
+              className={
+                activeSection === item.id
+                  ? 'nav-link active'
+                  : 'nav-link'
+              }
+              onClick={() => setActiveSection(item.id)}
             >
               {item.label}
             </button>
           ))}
         </nav>
 
-        {activeSection === 'overview' && <DashboardOverview onNavigate={setActiveSection} />}
-        {activeSection === 'report' && <EmergencyReportForm isAuthenticated={Boolean(auth.profile)} onOpenAccount={() => setActiveSection('account')} />}
-        {activeSection === 'assistance' && <AssistanceRequestForm />}
-        {activeSection === 'tracking' && <RequestTracker isAuthenticated={Boolean(auth.profile)} onOpenAccount={() => setActiveSection('account')} />}
-        {activeSection === 'alerts' && <AlertsSection />}
-        {activeSection === 'profile' && <PublicProfile auth={auth} onOpenAccount={() => setActiveSection('account')} />}
-        {activeSection === 'account' && <AuthPanel onAuthenticated={handleAuthenticated} />}
+        {activeSection === 'overview' && (
+          <DashboardOverview onNavigate={setActiveSection} />
+        )}
+
+
+        {activeSection === 'report' && (
+          <EmergencyReportForm
+            isAuthenticated={Boolean(auth.profile)}
+            onOpenAccount={() => setActiveSection('account')}
+          />
+        )}
+
+        {activeSection === 'assistance' && (
+          <AssistanceRequestForm />
+        )}
+
+        {activeSection === 'tracking' && (
+          <RequestTracker
+            isAuthenticated={Boolean(auth.profile)}
+            onOpenAccount={() => setActiveSection('account')}
+          />
+        )}
+
+        {activeSection === 'alerts' && (
+          <AlertsSection />
+        )}
+
+        {activeSection === 'safety' && (
+          <SafetyPrecautions />
+        )}
+
+        {activeSection === 'profile' && (
+          <PublicProfile
+            auth={auth}
+            onOpenAccount={() => setActiveSection('account')}
+          />
+        )}
+
+        {activeSection === 'government-access' && (
+          <GovernmentAccess
+            auth={auth}
+            onOpenAccount={() => setActiveSection('account')}
+            onAuthRefresh={refreshAuthenticatedUser}
+          />
+        )}
+
+        {activeSection === 'account' && (
+          <AuthPanel
+            onAuthenticated={handleAuthenticated}
+          />
+        )}
       </main>
     </div>
   );
