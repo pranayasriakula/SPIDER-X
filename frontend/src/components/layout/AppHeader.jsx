@@ -1,10 +1,11 @@
-export function AppHeader({ profile, onLogout, onOpenAccount }) {
+export function AppHeader({ profile, onLogout, onOpenAccount, onOpenOverview }) {
   return (
     <header className="app-header">
       <div className="page-container header-content">
         <a
           className="brand"
           href="#overview"
+          onClick={onOpenOverview}
           aria-label="RAKSHAK public dashboard home"
         >
           <span className="brand-mark" aria-hidden="true">

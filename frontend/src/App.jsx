@@ -329,6 +329,7 @@ function App() {
     <div className="app-shell">
       <AppHeader
         profile={auth.profile}
+        onOpenOverview={() => setActiveSection('overview')}
         onLogout={handleLogout}
         onOpenAccount={() => setActiveSection('account')}
       />
