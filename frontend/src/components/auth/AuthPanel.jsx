@@ -71,7 +71,7 @@ export function AuthPanel({ onAuthenticated, portal = 'public' }) {
   return (
     <section className="form-page" aria-labelledby="auth-title">
       <p className="eyebrow">
-  {isGovernment ? 'Government Portal' : 'Public Portal'}
+  RAKSHAK · {isGovernment ? 'Government Portal' : 'Public Portal'}
 </p>
 
 <h1 id="auth-title">

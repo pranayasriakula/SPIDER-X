@@ -123,7 +123,7 @@ const handleUpdateStatus = async (status) => {
   }}
 >
   {showCreateForm ? 'Cancel' : 'Create Alert'}
-</button><p className="eyebrow">Emergency communications</p><h2>Alerts</h2><p>Review official alerts returned by the Spider-X backend.</p></div></div>
+</button><p className="eyebrow">Emergency communications</p><h2>Alerts</h2><p>Review official alerts returned by the RAKSHAK backend.</p></div></div>
     {showCreateForm && (
   <form className="alert-create-form" onSubmit={handleCreateAlert}>
     <h3>Create Official Alert</h3>

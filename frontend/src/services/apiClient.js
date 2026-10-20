@@ -26,7 +26,7 @@ export async function apiRequest({ endpoint, method = 'GET', accessToken, body, 
   ...(body ? { body: JSON.stringify(body) } : {}),
 });
   } catch {
-    throw new ApiRequestError({ method, endpoint, status: null, code: 'NETWORK_ERROR', message: 'Unable to reach the Spider-X service. Check that it is running and try again.' });
+    throw new ApiRequestError({ method, endpoint, status: null, code: 'NETWORK_ERROR', message: 'Unable to reach the RAKSHAK service. Check that it is running and try again.' });
   }
 
   let payload = null;

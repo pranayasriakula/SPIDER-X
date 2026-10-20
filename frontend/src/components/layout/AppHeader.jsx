@@ -5,14 +5,14 @@ export function AppHeader({ profile, onLogout, onOpenAccount }) {
         <a
           className="brand"
           href="#overview"
-          aria-label="Rakshak public dashboard home"
+          aria-label="RAKSHAK public dashboard home"
         >
           <span className="brand-mark" aria-hidden="true">
             R
           </span>
 
           <span>
-            <strong>Rakshak</strong>
+            <strong>RAKSHAK</strong>
             <small>Public Safety Dashboard</small>
           </span>
         </a>

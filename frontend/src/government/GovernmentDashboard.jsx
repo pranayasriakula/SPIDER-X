@@ -29,7 +29,7 @@ const formatLocation = ({ latitude, longitude }) => Number.isFinite(latitude) &&
 function LoginScreen({ errorMessage, onLogin, submitting }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  return <main className="login-page"><section className="login-intro"><div className="brand"><div className="brand-mark"><span>S</span></div><div><strong>SPIDER-X</strong><small>Emergency Command</small></div></div><div className="intro-copy"><p className="eyebrow">Secure operations portal</p><h1>Coordinate emergency response with confidence.</h1><p>Access is reserved for authorized government emergency-management personnel.</p></div></section><section className="login-panel" aria-labelledby="login-title"><div className="login-card"><p className="eyebrow">Authority sign in</p><h2 id="login-title">Welcome back</h2><p className="login-description">Sign in with your authorized Spider-X account to continue.</p><div className="demo-access-note"><strong>DEVELOPMENT / DEMO ACCESS</strong><span>authority@spiderx.local - demo123</span></div><form onSubmit={(event) => { event.preventDefault(); onLogin({ email, password }); }}><label htmlFor="email">Email address</label><input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /><label htmlFor="password">Password</label><input id="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />{errorMessage && <p className="form-error" role="alert">{errorMessage}</p>}<button className="login-button" type="submit" disabled={submitting}>{submitting ? 'Signing in...' : 'Sign in to command center'}</button></form></div></section></main>;
+  return <main className="login-page"><section className="login-intro"><div className="brand"><div className="brand-mark"><span>R</span></div><div><strong>RAKSHAK</strong><small>Emergency Command</small></div></div><div className="intro-copy"><p className="eyebrow">Secure operations portal</p><h1>Coordinate emergency response with confidence.</h1><p>Access is reserved for authorized government emergency-management personnel.</p></div></section><section className="login-panel" aria-labelledby="login-title"><div className="login-card"><p className="eyebrow">Authority sign in</p><h2 id="login-title">Welcome back</h2><p className="login-description">Sign in with your authorized RAKSHAK account to continue.</p><div className="demo-access-note"><strong>DEVELOPMENT / DEMO ACCESS</strong><span>authority@spiderx.local - demo123</span></div><form onSubmit={(event) => { event.preventDefault(); onLogin({ email, password }); }}><label htmlFor="email">Email address</label><input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /><label htmlFor="password">Password</label><input id="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />{errorMessage && <p className="form-error" role="alert">{errorMessage}</p>}<button className="login-button" type="submit" disabled={submitting}>{submitting ? 'Signing in...' : 'Sign in to command center'}</button></form></div></section></main>;
 }
 
 function SectionMessage({ section, emptyMessage }) {
@@ -93,9 +93,9 @@ function GovernmentDashboard({ account, onLogout }) {
       <div className="dashboard-shell">
         <aside className="sidebar">
           <div className="brand">
-            <div className="brand-mark"><span>S</span></div>
+            <div className="brand-mark"><span>R</span></div>
             <div>
-              <strong>SPIDER-X</strong>
+              <strong>RAKSHAK</strong>
               <small>Emergency Command</small>
             </div>
           </div>
@@ -124,7 +124,7 @@ function GovernmentDashboard({ account, onLogout }) {
         <main className="main-content">
           <header className="topbar">
             <div>
-              <p className="eyebrow">Spider-X emergency management</p>
+              <p className="eyebrow">RAKSHAK emergency management</p>
               <h1>Government Authority</h1>
             </div>
 

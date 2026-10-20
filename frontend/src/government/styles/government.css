@@ -94,3 +94,13 @@ table { width: 100%; border-collapse: collapse; text-align: left; }th { padding:
 .government-app textarea {
   font-family: inherit;
 }
+
+/* Keep command-center navigation reachable in narrow browser panels and phones. */
+@media (max-width: 680px) {
+  .sidebar { display: flex; position: static; height: auto; }
+  .sidebar .brand { padding-bottom: 1rem; }
+  .sidebar nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem; }
+  .sidebar .nav-label { grid-column: 1 / -1; }
+  .sidebar .nav-item { min-width: 0; margin: 0; }
+  .sidebar-footer { margin-top: 1rem; }
+}

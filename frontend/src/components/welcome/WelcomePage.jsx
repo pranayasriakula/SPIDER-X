@@ -19,7 +19,7 @@ export function WelcomePage({ onSelectPortal }) {
         </p>
 
         <h1 style={{ fontSize: 'clamp(36px, 6vw, 64px)', marginBottom: '12px' }}>
-          SPIDER-X
+          RAKSHAK
         </h1>
 
         <p style={{ color: '#c8d8e5', marginBottom: '40px' }}>

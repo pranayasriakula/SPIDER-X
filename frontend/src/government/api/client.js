@@ -55,7 +55,7 @@ const parseResponseBody = async (response) => {
 };
 
 /**
- * Sends a request to the Spider-X backend and returns its `data` payload.
+ * Sends a request to the RAKSHAK backend and returns its `data` payload.
  * The token is deliberately held only in this client module; authentication
  * screens can set or clear it through the exported helpers when implemented.
  */
@@ -74,7 +74,7 @@ export const request = async (method, endpoint, body) => {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   } catch (cause) {
-    throw new ApiClientError('Unable to reach the Spider-X backend. Check that it is running and reachable.', {
+    throw new ApiClientError('Unable to reach the RAKSHAK backend. Check that it is running and reachable.', {
       code: 'NETWORK_ERROR',
       cause,
     });
