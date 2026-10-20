@@ -108,7 +108,7 @@ export function AuthPanel({ onAuthenticated, portal = 'public' }) {
 )}
 
       <form className="public-form" onSubmit={handleSubmit}>
-        {mode === 'register' && <><label>Name (optional)<input name="name" value={form.name} onChange={updateField} autoComplete="name" /></label><label>Phone (optional)<input name="phone" value={form.phone} onChange={updateField} autoComplete="tel" /></label><label>Location (optional)<input name="location" value={form.location} onChange={updateField} /></label></>}
+        {mode === 'register' && <><label>Name<input name="name" value={form.name} onChange={updateField} autoComplete="name" /></label><label>Phone<input name="phone" value={form.phone} onChange={updateField} autoComplete="tel" /></label><label>Location<input name="location" value={form.location} onChange={updateField} /></label></>}
         <label>Email<input name="email" value={form.email} onChange={updateField} autoComplete="email" type="email" required /></label>
         <label>
   Password
