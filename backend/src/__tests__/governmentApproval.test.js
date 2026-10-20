@@ -109,12 +109,37 @@ test('government HTTP authorization, validation and service-role RPC boundary', 
       assert.deepEqual(result.body.data, queryResult);
       assert.deepEqual(calls.at(-1), { table: 'government_approval_audit', filters: [['application_id', id]] });
     });
-    await t.test('profile updates cannot change role even for an Admin', async () => {
-      for (const token of ['public', 'admin']) {
-        assert.equal((await request(`/api/users/${applicant}`, 'PATCH', { role: 'AUTHORITY' }, token)).status, 400);
-        assert.equal((await request(`/api/users/${applicant}`, 'PATCH', { role: 'ADMIN', name: 'Name' }, token)).status, 200);
-        assert.deepEqual(calls.at(-1).values, { name: 'Name' });
+    await t.test('role-only profile updates are rejected without persistence for every caller role', async () => {
+      for (const [token, userId] of [['public', applicant], ['authority', authority], ['admin', applicant], ['admin', admin]]) {
+        for (const role of ['PUBLIC', 'AUTHORITY', 'ADMIN', 'INVALID', null]) {
+          const before = calls.length;
+          assert.deepEqual(await request(`/api/users/${userId}`, 'PATCH', { role }, token), {
+            status: 400, body: { code: 'VALIDATION_ERROR' }
+          });
+          assert.equal(calls.length, before);
+        }
       }
+    });
+    await t.test('mixed profile updates persist only legitimate fields for every caller role', async () => {
+      const fields = { name: 'Name', phone: '1234567890', location: { city: 'Chennai' } };
+      for (const [token, userId] of [['public', applicant], ['authority', authority], ['admin', applicant], ['admin', admin]]) {
+        for (const role of ['PUBLIC', 'AUTHORITY', 'ADMIN', 'INVALID', null]) {
+          const before = calls.length;
+          assert.equal((await request(`/api/users/${userId}`, 'PATCH', { ...fields, role }, token)).status, 200);
+          assert.equal(calls.length, before + 1);
+          assert.deepEqual(calls.at(-1), { table: 'profiles', values: fields });
+        }
+        assert.equal((await request(`/api/users/${userId}`, 'PATCH', fields, token)).status, 200);
+        assert.deepEqual(calls.at(-1), { table: 'profiles', values: fields });
+      }
+    });
+    await t.test('profile updates still require authentication and ownership or ADMIN', async () => {
+      const before = calls.length;
+      assert.equal((await request(`/api/users/${applicant}`, 'PATCH', { name: 'Name' }, null)).status, 401);
+      for (const [token, userId] of [['public', authority], ['authority', applicant]]) {
+        assert.equal((await request(`/api/users/${userId}`, 'PATCH', { name: 'Name', role: 'ADMIN' }, token)).status, 403);
+      }
+      assert.equal(calls.length, before);
     });
   } finally {
     await new Promise((resolve) => server.close(resolve));

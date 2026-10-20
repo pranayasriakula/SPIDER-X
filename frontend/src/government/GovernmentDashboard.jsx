@@ -5,6 +5,7 @@ import ResourcesPage from './components/ResourcesPage.jsx';
 import RobotsPage from './components/RobotsPage.jsx';
 import AlertsPage from './components/AlertsPage.jsx';
 import NotificationsPage from './components/NotificationsPage.jsx';
+import AdminApprovals from './components/AdminApprovals.jsx';
 import './styles/government.css';
 
 const navigation = [
@@ -82,7 +83,10 @@ function GovernmentDashboard({ account, onLogout }) {
   }
 
   const accountName = account?.profile?.name || account?.user?.email;
-  const pageTitle = navigation.find(([id]) => id === activeSection)?.[1];
+  const visibleNavigation = account?.profile?.role === 'ADMIN'
+    ? [...navigation, ['approvals', 'Government Approvals', '✓']]
+    : navigation;
+  const pageTitle = visibleNavigation.find(([id]) => id === activeSection)?.[1];
 
   return (
     <div className="government-app">
@@ -98,7 +102,7 @@ function GovernmentDashboard({ account, onLogout }) {
 
           <nav aria-label="Dashboard navigation">
             <p className="nav-label">Command center</p>
-            {navigation.map(([id, label, icon]) => (
+            {visibleNavigation.map(([id, label, icon]) => (
               <button
                 className={`nav-item ${activeSection === id ? 'active' : ''}`}
                 key={id}
@@ -142,6 +146,8 @@ function GovernmentDashboard({ account, onLogout }) {
 
           {activeSection === 'overview' ? (
             <OverviewPage />
+          ) : activeSection === 'approvals' ? (
+            <AdminApprovals role={account?.profile?.role} />
           ) : activeSection === 'reports' ? (
             <ReportsPage />
           ) : activeSection === 'resources' ? (

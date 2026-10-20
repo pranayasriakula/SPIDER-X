@@ -132,10 +132,13 @@ function App() {
     try {
       const { user, profile } = await getCurrentUser(accessToken);
 
+      // Ignore a response from a session that was signed out or replaced.
+      if (getAccessToken() !== accessToken) return null;
+
       if (!allowedRoles.includes(profile?.role)) {
-        throw new Error(
-          'Your account does not have access to this portal.'
-        );
+        const error = new Error('Your account does not have access to this portal.');
+        error.code = 'INVALID_PROFILE';
+        throw error;
       }
 
       setSelectedPortal(getPortalForRole(profile.role));
@@ -149,6 +152,13 @@ function App() {
 
       return { user, profile };
     } catch (error) {
+      if (getAccessToken() !== accessToken) return null;
+      if (error.status === 401 || error.status === 403 || error.code === 'INVALID_PROFILE') {
+        clearAccessToken();
+        setSelectedPortal(null);
+        setAuth({ loading: false, user: null, profile: null, error });
+        throw error;
+      }
       setAuth((current) => ({
         ...current,
         loading: false,
@@ -158,6 +168,27 @@ function App() {
       throw error;
     }
   }, []);
+
+  // Keep both portals in sync with approvals, revocations and expired sessions.
+  useEffect(() => {
+    if (!auth.user) return;
+    let refreshing = false;
+    const refresh = async () => {
+      if (refreshing || document.visibilityState === 'hidden') return;
+      refreshing = true;
+      try { await refreshAuthenticatedUser(); }
+      catch { /* Application pages show request errors; transient failures retain the session. */ }
+      finally { refreshing = false; }
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    const interval = window.setInterval(refresh, 60000);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+      window.clearInterval(interval);
+    };
+  }, [auth.user?.id, refreshAuthenticatedUser]);
 
   // Verify login and ensure the account belongs to the selected portal.
   async function handleAuthenticated(accessToken) {

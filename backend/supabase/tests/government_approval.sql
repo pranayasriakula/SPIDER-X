@@ -2,7 +2,6 @@
 -- back. Run with psql -v ON_ERROR_STOP=1 -f government_approval.sql after setting
 -- PGOPTIONS='-c rakshak.test_database=on' for the disposable database connection.
 BEGIN;
-SET LOCAL rakshak.test_database = 'on';
 
 DO $$
 BEGIN
