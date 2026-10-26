@@ -36,7 +36,6 @@ const navigationItems = [
   { id: 'alerts', label: 'Alerts' },
   { id: 'safety', label: 'Safety & Precautions' },
   { id: 'profile', label: 'Profile' },
-  { id: 'government-access', label: 'Government Access' },
   { id: 'account', label: 'Account' },
 ];
 
