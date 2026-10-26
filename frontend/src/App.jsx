@@ -10,6 +10,7 @@ import { AlertsSection } from './components/alerts/AlertsSection';
 import { RequestTracker } from './components/tracking/RequestTracker';
 import { PublicProfile } from './components/profile/PublicProfile';
 import { GovernmentAccess } from './components/government/GovernmentAccess';
+import { GovernmentPortalLanding } from './components/government/GovernmentPortalLanding';
 import { AppHeader } from './components/layout/AppHeader';
 import { AuthPanel } from './components/auth/AuthPanel';
 import { WelcomePage } from './components/welcome/WelcomePage';
@@ -56,6 +57,7 @@ function App() {
   const [activeSection, setActiveSection] = useState('overview');
 
   const [selectedPortal, setSelectedPortal] = useState(null);
+  const [applicationFlow, setApplicationFlow] = useState(false);
 
   const [auth, setAuth] = useState({
     loading: true,
@@ -262,6 +264,7 @@ function App() {
 
       setActiveSection('overview');
       setSelectedPortal(null);
+      setApplicationFlow(false);
     }
   }
 
@@ -276,10 +279,62 @@ function App() {
     );
   }
 
+  // Keep applicants in the existing application flow while their role is PUBLIC.
+  if (auth.user && applicationFlow && auth.profile?.role === 'PUBLIC') {
+    return (
+      <main className="page-container" style={{ minHeight: '100vh', paddingTop: '24px' }}>
+        <button
+          type="button"
+          className="nav-link"
+          onClick={() => {
+            setApplicationFlow(false);
+            setActiveSection('overview');
+          }}
+          style={{ marginBottom: '24px' }}
+        >
+          Back to Public Dashboard
+        </button>
+        <GovernmentAccess
+          auth={auth}
+          onAuthRefresh={refreshAuthenticatedUser}
+          onOpenAccount={() => {
+            setApplicationFlow(false);
+            setActiveSection('account');
+          }}
+        />
+      </main>
+    );
+  }
+
   // Show Welcome Page before selecting a portal.
   if (!auth.user && !selectedPortal) {
     return (
-      <WelcomePage onSelectPortal={setSelectedPortal} />
+      <WelcomePage
+        onSelectPortal={(portal) => {
+          setApplicationFlow(false);
+          setSelectedPortal(portal === 'government' ? 'government-landing' : portal);
+        }}
+      />
+    );
+  }
+
+  // Government users choose sign-in or the application flow before login.
+  if (!auth.user && selectedPortal === 'government-landing') {
+    return (
+      <GovernmentPortalLanding
+        onSignIn={() => {
+          setApplicationFlow(false);
+          setSelectedPortal('government');
+        }}
+        onApply={() => {
+          setApplicationFlow(true);
+          setSelectedPortal('public');
+        }}
+        onBack={() => {
+          setApplicationFlow(false);
+          setSelectedPortal(null);
+        }}
+      />
     );
   }
 
@@ -296,7 +351,14 @@ function App() {
         <button
           type="button"
           className="nav-link"
-          onClick={() => setSelectedPortal(null)}
+          onClick={() => {
+            setSelectedPortal(
+              applicationFlow || selectedPortal === 'government'
+                ? 'government-landing'
+                : null
+            );
+            setApplicationFlow(false);
+          }}
           style={{ marginBottom: '24px' }}
         >
           ← Back to Portal Selection
