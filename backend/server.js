@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 
 const express = require('express');
@@ -19,8 +20,25 @@ const errorHandler = require('./src/middleware/errorHandler');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Allow a local frontend to call this API during development.
-app.use(cors());
+// Allow only explicitly configured frontend origins.
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Permit requests without an Origin header, such as server-to-server calls.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Origin not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
 
 // Parse JSON request bodies.
 app.use(express.json());
@@ -30,7 +48,10 @@ app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/government', require('./src/routes/governmentRoutes'));
-app.use('/api/admin/government-applications', require('./src/routes/governmentAdminRoutes'));
+app.use(
+  '/api/admin/government-applications',
+  require('./src/routes/governmentAdminRoutes')
+);
 app.use('/api/reports', reportRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/actions', actionRoutes);
@@ -45,5 +66,5 @@ app.use(notFound);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Spider-X backend is running on http://localhost:${PORT}`);
+  console.log(`Spider-X backend is running on port ${PORT}`);
 });
